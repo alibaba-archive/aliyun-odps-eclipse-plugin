@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+  -->
+
+<plugin>
+   <extension-point id="nodeContextAction" name="ODPS Explorer Node Context Action" schema="schema/nodeContextAction.exsd"/>
+   <extension-point id="dataSetTableContextAction" name="Table Context Menu Action" schema="schema/dataSetTableContextAction.exsd"/>
+  
+   <!-- *************** New Wizard **************** -->
+   <!--Mapreduce -->
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="com.aliyun.odps.eclipse.category"
+            name="ODPS">
+      </category>
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewOdpsProjectWizard"
+            finalPerspective="com.aliyun.odps.eclipse.perspective"
+            icon="icons/odps_mapreduce.png"
+            id="com.aliyun.odps.eclipse.NewOdpsProjectWizard"
+            name="ODPS Project"
+            project="true">
+      </wizard>
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewMapperWizard"
+            icon="icons/mapper.png"
+            id="com.aliyun.odps.eclipse.NewMapperWizard"
+            name="Mapper"
+            project="false">
+      </wizard>
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewReducerWizard"
+            icon="icons/reducer.png"
+            id="com.aliyun.odps.eclipse.NewReducerWizard"
+            name="Reducer"
+            project="false">
+      </wizard>
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewDriverWizard"
+            icon="icons/driver.png"
+            id="com.aliyun.odps.eclipse.NewDriverWizard"
+            name="MapReduce Driver"
+            project="false">
+      </wizard>
+      <!--UDF|UDTF -->
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewUDFWizard"
+            icon="icons/udf.png"
+            id="com.aliyun.odps.eclipse.NewUDFWizard"
+            name="UDF"
+            project="false">
+      </wizard>
+      <wizard
+            category="com.aliyun.odps.eclipse.category"
+            class="com.aliyun.odps.eclipse.create.wizard.NewUDTFWizard"
+            icon="icons/udtf.png"
+            id="com.aliyun.odps.eclipse.NewUDTFWizard"
+            name="UDTF"
+            project="false">
+      </wizard>
+   </extension>
+   
+   <!-- *************** Perspectives **************** -->
+     
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="com.aliyun.odps.eclipse.perspective.MapReducePerspective"
+            icon="icons/odps_mapreduce.png"
+            id="com.aliyun.odps.eclipse.perspective.mapreduce"
+            name="ODPS">
+      </perspective>
+   </extension>
+   
+   <!-- *************** Project Nature **************** -->
+   
+   <extension
+         id="com.aliyun.odps.eclipse.projectNature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run
+               class="com.aliyun.odps.eclipse.create.wizard.ProjectNature">
+         </run>
+      </runtime>
+   </extension>
+   <extension
+         point="org.eclipse.ui.ide.projectNatureImages">
+      <image
+            icon="icons/odps_project_nature.png"
+            id="com.aliyun.odps.eclipse.natureImage"
+            natureId="com.aliyun.odps.eclipse.projectNature">
+      </image>
+   </extension>
+   
+   <!-- *************** Preference **************** -->
+   
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="com.aliyun.odps.eclipse.preferences.PreferencePageRoot"
+            id="com.aliyun.odps.eclipse.preferences.PreferencePageRoot"
+            name="ODPS">
+      </page>
+      <page
+            category="com.aliyun.odps.eclipse.preferences.PreferencePageRoot"
+            class="com.aliyun.odps.eclipse.preferences.PreferencePageOdpsConsole"
+            id="com.aliyun.odps.eclipse.preferences.PreferencePageOdpsConsole"
+            name="ODPS Configuration">
+      </page>
+   </extension>
+   
+   <!-- *************** Launch Shortcut **************** -->
+   <!--Mapreduce -->
+    <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.aliyun.odps.eclipse.launch.shortcut.ODPSApplicationShortcut"
+            description="Launch a local ODPS application"
+            icon="icons/odps_mapreduce.png"
+            id="com.aliyun.odps.eclipse.launchShortcut.local"
+            label="ODPS Mapreduce"
+            modes="run, debug">
+            <description
+     		 description="Runs an ODPS Mapreduce"
+             mode="run">
+            </description>
+            <description
+             description="Debugs an ODPS Mapreduce"
+             mode="debug">
+            </description>
+           <configurationType
+           id="com.aliyun.odps.eclipse.launchConfigurationODPS">
+           </configurationType>
+         <contextualLaunch>
+            <enablement>
+    		  <with variable="selection">
+     		    <count value="1"/>
+                  <iterate>
+                    <or>
+                      <test property="org.eclipse.jdt.launching.hasMain"/>
+                    <and>
+                      <test property="org.eclipse.jdt.launching.isContainer"/>
+                      <test property="org.eclipse.jdt.launching.hasProjectNature" args="org.eclipse.jdt.core.javanature"/>
+                    </and>
+                    </or>
+                  </iterate>
+              </with>
+           </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   <!--UDF|UDTF -->
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.aliyun.odps.eclipse.launch.shortcut.udf.UDFLaunchShortcuts"
+            description="Launch a local ODPS UDF|UDTF"
+            icon="icons/udf.png"
+            id="com.aliyun.odps.eclipse.launchShortcut.local"
+            label="ODPS UDF|UDTF"
+            modes="run, debug">
+            <description
+     		 description="Runs an ODPS ODPS UDF|UDTF"
+             mode="run">
+            </description>
+            <description
+             description="Debugs an ODPS ODPS UDF|UDTF"
+             mode="debug">
+            </description>
+           <configurationType
+           id="com.aliyun.odps.eclipse.launchConfigurationODPS_UDF">
+           </configurationType>
+         <contextualLaunch>
+            <enablement>
+    		  
+           </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   <!-- *************** PropertyTesters **************** -->
+   <!--
+    <extension point="org.eclipse.core.expressions.propertyTesters">
+	    <propertyTester
+	      id="com.aliyun.odps.eclipse.isUDF"
+	      type="org.eclipse.core.resources.IResource"
+	      namespace="com.aliyun.odps.eclipse"
+	      properties="isUDF"
+	      class="com.aliyun.odps.eclipse.property.tester.IsUDF">
+	    </propertyTester>
+  </extension>
+  -->
+   <!-- *************** Launch Configuration **************** -->
+   <!--Mapreduce -->
+     <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.aliyun.odps.eclipse.launch.configuration.ODPSLaunchConfigurationDelegate"
+            id="com.aliyun.odps.eclipse.launchConfigurationODPS"
+            modes="run,debug"
+            name="ODPS Mapreduce">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.aliyun.odps.eclipse.launch.configuration.ODPSLaunchConfigurationTabGroup"
+            id="com.aliyun.odps.eclipse.launchConfigurationTabGroup"
+            type="com.aliyun.odps.eclipse.launchConfigurationODPS">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.aliyun.odps.eclipse.launchConfigurationODPS"
+            icon="icons/odps_mapreduce.png"
+            id="com.aliyun.odps.eclipse.launchConfigurationTypeImage">
+      </launchConfigurationTypeImage>
+   </extension>
+   <!--UDF|UDTF -->
+    <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.aliyun.odps.eclipse.launch.configuration.udf.UDFLaunchConfigurationDelegate"
+            id="com.aliyun.odps.eclipse.launchConfigurationODPS_UDF"
+            modes="run,debug"
+            name="ODPS UDF|UDTF">
+      </launchConfigurationType>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.aliyun.odps.eclipse.launch.configuration.udf.UDFLaunchConfigurationTabGroup"
+            id="com.aliyun.odps.eclipse.UDFLaunchConfigurationTabGroup"
+            type="com.aliyun.odps.eclipse.launchConfigurationODPS_UDF">
+      </launchConfigurationTabGroup>
+   </extension>
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.aliyun.odps.eclipse.launchConfigurationODPS_UDF"
+            icon="icons/udf.png"
+            id="com.aliyun.odps.eclipse.launchConfigurationTypeImage_ODPS_UDF">
+      </launchConfigurationTypeImage>
+   </extension>
+</plugin>

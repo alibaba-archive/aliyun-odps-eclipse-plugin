@@ -1,0 +1,15 @@
+PACKAGEPATH
+
+public class TESTTNAME  {
+  
+  public static void main(String []args) throws Exception{
+    String inputFileName = "udf/udtf_test/TESTTNAME.in";
+    String outputFileName = "udf/udtf_test/TESTTNAME.out";
+    
+    TestUDTFBase testBase = new TestUDTFBase(inputFileName, outputFileName);
+    testBase.initUserObject(USERCLASSFULLPATH.class);
+    testBase.testUDTFClass();
+    System.out.println("Run succeed. Please check output file: "
+        + outputFileName + ".");
+  }
+}

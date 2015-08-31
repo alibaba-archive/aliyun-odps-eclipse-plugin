@@ -1,0 +1,117 @@
+PACKAGEPATH
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+@SuppressWarnings("rawtypes")
+public class TestUDFBase {
+  private final static String ODPS_SEPARATOR = ",";
+  private static Method callMeth = null;
+
+  protected String inputFileName = null;
+  protected String outputFileName = null;
+  private static Object UDFClass = null;
+
+  private List input_parameter = new ArrayList();
+
+  public static void setUDFClass(Class uc) throws Exception {
+    UDFClass = uc.newInstance();
+    Method[] meths = uc.getMethods();
+    for (Method meth : meths) {
+      if (meth.getName() == "evaluate")
+        callMeth = meth;
+    }
+    if (callMeth == null)
+      throw new RuntimeException("Class has no method evaluate");
+  }
+
+  public TestUDFBase(String inputFileName, String outputFileName) {
+    this.inputFileName = inputFileName;
+    this.outputFileName = outputFileName;
+  }
+
+  private Object parseValue(Class type, String st) {
+    if (type == int.class)
+      return Integer.valueOf(Integer.parseInt(st));
+    if (type == Integer.class)
+      return Integer.valueOf(Integer.parseInt(st));
+    if (type == Long.class)
+      return Long.valueOf(Long.parseLong(st));
+    if (type == Double.class)
+      return Double.valueOf(Double.parseDouble(st));
+    if (type == Boolean.class)
+      return Boolean.valueOf(Boolean.parseBoolean(st));
+    if (type == String.class)
+      return st;
+    throw new RuntimeException("Function has not a correct type parameters");
+  }
+
+  @SuppressWarnings("unchecked")
+  public void checkInput(String in) {
+    input_parameter.clear();
+    String input_para = in;
+    String[] input_split_string = input_para.split(ODPS_SEPARATOR);
+    Class[] para_types = callMeth.getParameterTypes();
+    if (input_split_string.length != para_types.length)
+      throw new RuntimeException(
+          "length input parameter not equals length evaluate method parameters");
+    for (int i = 0; i < input_split_string.length; ++i) {
+      input_parameter.add(parseValue(para_types[i], input_split_string[i]));
+    }
+  }
+
+  public String execEvaluate() throws IllegalArgumentException,
+      IllegalAccessException, InvocationTargetException, IOException {
+    return (String) callMeth.invoke(UDFClass, input_parameter.toArray()) + "\n";
+  }
+
+  public void testUDFClass() throws IllegalArgumentException,
+      IllegalAccessException, InvocationTargetException, IOException {
+
+    BufferedReader input = null;
+    BufferedWriter out = null;
+    boolean empty = true;
+
+    try {
+      input = new BufferedReader(new FileReader(inputFileName));
+      out = new BufferedWriter(new FileWriter(outputFileName, false));
+      String inputLine = null;
+      while (true) {
+        inputLine = input.readLine();
+        if (inputLine == null)
+          break;
+        checkInput(inputLine);
+        empty = false;
+        out.write(execEvaluate());
+      }
+    } finally {
+      try {
+        if(null != input)
+          input.close();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      try {
+        if(null != out)
+          out.close();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+
+    if (empty) {
+      throw new RuntimeException("InputFile: is empty,"
+          + "plese add input data into " + inputFileName + "!");
+    }
+
+  }
+}

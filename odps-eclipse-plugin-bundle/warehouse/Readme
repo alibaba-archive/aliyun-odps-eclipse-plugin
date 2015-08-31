@@ -1,0 +1,148 @@
+# ODPS Eclipse 插件
+## 说明
+* Eclipse 版本>=3.7
+* JDK版本>=1.6
+
+## 功能列表
+
+* Local Debug Mapreduce程序
+
+* Local Debug UDF/UDTF程序
+
+* Local UDF/UDTF Unit Test
+
+## 示例运行
+* Local Debug Mapreduce程序
+
+     右键单击WordCount类（或Resource类）--> Run As-->ODPS Mapreduce-->输入参数（参考类文件头部说明）-->Finish
+     
+     菜单栏Run-->Run Configurations-->右键单击ODPS Mapreduce-->New-->输入参数（参考类文件头部说明）-->Run  
+      
+* Local Debug UDF/UDTF程序
+
+     右键单击UDFExample类（或UDFResource等类）--> Run As-->ODPS UDF|UDTF-->输入参数（参考类文件头部说明）-->Finish
+     
+     菜单栏Run-->Run Configurations-->右键单击ODPS ODPS UDF|UDTF-->New-->输入参数（参考类文件头部说明）-->Run
+     
+* Local UDF/UDTF Unit Test
+
+     右键单击UDFTest/UDTFTestTest类-->Run As-->Java Application
+     
+     用户可以参考这三个类改写成JUnit测试单元
+     
+## 创建
+*  ODPS Project
+
+     File-->New-->Project..-->ODPS-->ODPS Project
+     
+* Mapper/Reducer/MapReducer Driver/UDF/UDTF模板
+
+     File-->New-->Other..-->ODPS-->相应模板
+       
+## MapReduce版本>=0.14.x
+
+**warehouse目录结构**
+
+    warehouse
+       |____example_project(项目空间目录)
+          |__ <__tables__>
+          |      |
+          |      |___table_name1(非分区表)
+          |      |      |____ data(文件)
+          |      |      |
+          |      |      |____ <__schema__> (文件)
+          |      |
+          |      | __table_name2(分区表)
+          |             |____ partition_name=partition_value(分区目录)
+          |             |          |____ data(文件)
+          |		 	    |
+          |             |____ <__schema__> (文件)
+          |    
+          |__ <__resources__>
+                  |
+                  |___table_resource_name（表资源）
+                  |   |____ <__ref__>
+                  |
+                  |___ file_resource_name（文件资源）
+                  
+ 说明：使用尖括号包含的文件名为固定值                             
+                  
+* __schema__文件格式
+
+**非分区表**
+
+	project=project_name
+	table=table_name
+	columns=col_name1:col_type,col_name2:col_type,...
+
+**分区表**
+
+	project=project_name
+	table=table_name
+	columns=col_name1:col_type,col_name2:col_type,...
+	partitions=col_name1:col_type,col_name2:col_type,...
+
+* __ref__文件格式
+
+**表资源为某个表**
+
+project_name.table_name
+
+
+**表资源为某个分区**
+
+project_name.table_name(partition_name1=partition_value1,partition_name2=partition_value2,...)
+
+
+## MapReduce版本=0.13.x
+
+**warehouse目录结构**
+
+    warehouse
+       |____example_project(项目空间目录)
+		  |
+          |___table_name1(非分区表)
+          |      |____ data(文件)
+          |	     |
+          |      |____ <__schema__> (文件)
+          |
+          | __table_name2(分区表)
+          |      |____ partition_name=partition_value(分区目录)
+          |      |          |____ data(文件)
+          | 	 |
+          |      |____ <__schema__> (文件)
+          |    
+          |__ <__resources__>
+                  |
+                  |
+                  |___ file_resource_name（文件资源）
+                              
+                  
+* __schema__文件格式
+
+**非分区表**
+
+	project=project_name
+	table=table_name
+	columns=col_name1:col_type,col_name2:col_type,...
+
+
+**分区表**
+
+	project=project_name
+	table=table_name
+	columns=col_name1:col_type,col_name2:col_type,...
+	partitions=col_name1:col_type,col_name2:col_type,...
+
+
+**特殊说明**
+
+    Local 模式下，0.13及以下版本使用资源文件时，需要在MR中加入特殊语句
+    如：com.aliyun.odps.mapred.examples.Resource
+    // 该行代码为本地测试特有代码，如果跑线上请将该行代码注释掉
+    job.setResources("file_resource.txt");
+    跑线上时需要将改行语句注释掉
+
+## Local模式下注意事项
+* 不要试图在mapper之间共享static变量，实际运行中各个mapper之间是隔离的（有可能分布在不同机器上）
+* 不要在mapper和reducer之间共享变量，实际运行中mapper和reducer是隔离的（可能分布在不同机器上）

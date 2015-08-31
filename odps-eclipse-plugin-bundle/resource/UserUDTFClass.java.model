@@ -1,0 +1,14 @@
+PACKAGEPATH
+
+import com.aliyun.odps.udf.UDTF;
+import com.aliyun.odps.udf.annotation.Resolve;
+
+// TODO define input and output types, e.g., "string,bigint->double,boolean".
+@Resolve({"...->..."})
+public class USERUDTFNAME extends UDTF {
+  
+  @Override
+  public void process(Object[] args) {
+  }
+  
+}

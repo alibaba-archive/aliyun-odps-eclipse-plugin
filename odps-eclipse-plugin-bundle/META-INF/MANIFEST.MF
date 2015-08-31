@@ -1,0 +1,24 @@
+Bundle-SymbolicName: odps-eclipse-plugin-bundle;singleton:=true
+Bundle-Name: odps eclipse plugin implementation
+Bundle-Activator: com.aliyun.odps.eclipse.Activator
+Eclipse-AutoStart: true
+Bundle-Version: 0.15.0
+Bundle-Vendor: Alibaba Cloud Computing
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.ui.ide,
+ org.eclipse.core.resources,
+ org.eclipse.ui.navigator,
+ org.eclipse.ui.navigator.resources,
+ org.eclipse.jdt.ui,
+ org.eclipse.jdt.core,
+ org.eclipse.jface.text,
+ org.eclipse.ui.console,
+ org.eclipse.debug.ui,
+ org.eclipse.jdt.launching,
+ org.eclipse.jdt.debug.ui,
+ org.eclipse.ui.editors
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ClassPath: .,
+ jdi.jar,
+ jdimodel.jar

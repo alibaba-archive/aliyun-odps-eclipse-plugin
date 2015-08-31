@@ -1,0 +1,179 @@
+PACKAGEPATH
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+
+import com.aliyun.odps.udf.UDTF;
+import com.aliyun.odps.udf.UDTFCollector;
+import com.aliyun.odps.udf.annotation.Resolve;
+
+public class TestUDTFBase {
+  private final static String ODPS_SEPARATOR = ",";
+  private final static String PROCESS = "process";
+  private final static String CLOSE = "close";
+  private final static String SETCOLLECTOR = "setCollector";
+  
+  private String inputFileName = null;
+  private String outputFileName = null;
+  private LocalCollector collector;
+  ArrayList<String> inputType = new ArrayList<String>();
+  ArrayList<String> outputType = new ArrayList<String>();
+  
+  private static UDTF UdtfInstance = null;
+  private static Class<? extends UDTF> userClass = null;
+  private static Method callMeth = null;
+  
+
+  public TestUDTFBase(String inputFileName, String outputFileName) {
+    this.inputFileName = inputFileName;
+    this.outputFileName = outputFileName;
+    collector = new LocalCollector();
+  }
+
+  public void initUserObject(Class<? extends UDTF> uc) throws Exception {
+    userClass = uc;
+    UdtfInstance = uc.newInstance();
+    Method[] meths = userClass.getMethods();
+    for (Method meth : meths) {
+      if (meth.getName() == PROCESS)
+        callMeth = meth;
+    }
+    if (callMeth == null)
+      throw new RuntimeException("Class " + uc + " has no method: process().");
+
+    collector.init();
+    callMeth = userClass.getMethod(SETCOLLECTOR, UDTFCollector.class);
+    callMeth.invoke(UdtfInstance, collector);
+  }
+
+  private static void parseTypes(String types, ArrayList<String> list) {
+    String[] type = types.split(",");
+    for(int i=0; i<type.length; i++){
+      list.add(type[i]);
+    }
+  }
+  
+  public void getInOutType() {
+    Resolve ann = userClass.getAnnotation(Resolve.class);
+    if (ann == null) {
+      throw new RuntimeException(
+          "method resolution not found, please use @Resolve");
+    }
+    String[] infos = ann.value();
+    if (infos.length != 1) {
+      throw new RuntimeException(
+          "annotation of Resolve must contain exactly one element");
+    }
+    
+    String info = infos[0];
+    String[] types = info.split("->");
+    if(2 == types.length && !types[0].equals("") && !types[1].equals("")){
+      parseTypes(types[0], inputType);
+      parseTypes(types[1], outputType);
+    } else {
+      throw new RuntimeException("Invalid @Resolve, should be: string...->string...");
+    }
+  }
+
+  public void testUDTFClass() throws SecurityException, NoSuchMethodException,
+      IllegalArgumentException, IllegalAccessException,
+      InvocationTargetException, IOException {
+    getInOutType();
+    BufferedReader input = new BufferedReader(new FileReader(inputFileName));
+    boolean empty = true;
+    try {
+      while (true) {
+        String inputLine;
+        inputLine = input.readLine();
+        if (inputLine == null)
+          break;
+        
+        String[] ins = inputLine.split(ODPS_SEPARATOR);
+        if (inputType.size() != ins.length)
+          throw new RuntimeException(
+              "length input parameter not equals to the length parameters define in @Resolve");
+              
+        Object[] objects = new Object[ins.length];
+        for(int i=0; i<ins.length; i++) {
+          objects[i] = parseValue(inputType.get(i), ins[i]);
+          if(null == objects[i]) {
+            throw new RuntimeException("Input type invalid:" + inputType.get(i));
+          }
+        }
+        empty = false;
+        callMeth = userClass.getMethod(PROCESS, Object[].class);
+        callMeth.invoke(UdtfInstance, (Object)objects);
+      }
+      callMeth = userClass.getMethod(CLOSE);
+      callMeth.invoke(UdtfInstance);
+    } finally {
+      try {
+        input.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      collector.close();
+    }
+    if (empty) {
+      throw new RuntimeException("InputFile: is empty,"
+          + "plese add input data into " + inputFileName + ".");
+    }
+  }
+  
+  private Object parseValue(String type, String st) {
+    if("string".equals(type))
+      return st;
+    if("bigint".equals(type))
+      return Long.parseLong(st);
+    if("double".equals(type))
+      return Double.parseDouble(st);
+    if("boolean".equals(type))
+      return Boolean.parseBoolean(st);
+    return null;
+  }
+
+  class LocalCollector implements UDTFCollector {
+    BufferedWriter output;
+
+    public LocalCollector() {
+    }
+
+    public void init() throws IOException {
+      output = new BufferedWriter(new FileWriter(outputFileName));
+    }
+
+    @Override
+    public void collect(Object[] args) {
+      if (args.length != outputType.size()) {
+        throw new RuntimeException(
+            "length output parameter not equals to the length parameters define in @Resolve.");
+      }
+      try {
+        for (int i = 0; i < args.length - 1; i++) {
+          if(null == parseValue(outputType.get(i), args[i].toString())) {
+            throw new RuntimeException("Output type invalid.");
+          }
+          output.write(args[i].toString() + ODPS_SEPARATOR);
+        }
+        output.write(args[args.length-1].toString() + "\n");
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException("Write failed! ", e);
+      }
+    }
+
+    public void close() {
+      try {
+        output.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+}
